@@ -689,6 +689,20 @@
                 BS.BanterScene.GetInstance().SetPublicSpaceProps({ [stateKey]: JSON.stringify(boardState) });
                 syncBoard();
                 clearSelection();
+            } else {
+                // Invalid move during must-jump. Re-highlight the required piece and its jumps.
+                console.log("Invalid move: Must complete the jump.");
+                clearSelection(); // Clear any invalid highlights
+                const [selRow, selCol] = game.selectedPiece;
+                const fromSquare = rowColToSquare(selRow, selCol);
+                state.selectedSquare = fromSquare;
+                if (state.tiles[fromSquare]) setMaterialColor(state.tiles[fromSquare], COLORS.selected);
+
+                const validJumps = game.getValidMoves(selRow, selCol).filter(m => m.type === 'jump');
+                validJumps.forEach(jump => {
+                    const toSquare = rowColToSquare(jump.to[0], jump.to[1]);
+                    if (state.tiles[toSquare]) setMaterialColor(state.tiles[toSquare], COLORS.valid);
+                });
             }
             return;
         }
@@ -729,9 +743,9 @@
         } else {
             console.log("Move invalid - deselecting");
             clearSelection();
-            // Try selecting different piece
+            // Try selecting different piece, but not if a jump is mandatory
             const piece = game.getPiece(row, col);
-            if (piece && game.isOwnPiece(piece)) {
+            if (piece && game.isOwnPiece(piece) && !game.mustJump) {
                 handleSquareClick(squareId);
             }
         }
