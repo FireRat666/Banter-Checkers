@@ -775,7 +775,7 @@
         // Listen for space state changes
         scene.On("space-state-changed", (e) => {
             const changes = e.detail.changes;
-            if (changes && changes.includes(stateKey)) {
+            if (changes && changes.find(c => c.property === stateKey)) {
                 const spaceState = scene.spaceState;
                 const val = (spaceState.public && spaceState.public[stateKey]) || (spaceState.protected && spaceState.protected[stateKey]);
                 
