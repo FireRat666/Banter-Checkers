@@ -71,6 +71,7 @@
             this.currentPlayer = 'red'; // red moves first
             this.selectedPiece = null;
             this.mustJump = false;
+            this.winner = null; // Add this line
             this.onMoveCallback = null;
         }
 
@@ -105,6 +106,7 @@
             this.currentPlayer = 'red';
             this.selectedPiece = null;
             this.mustJump = false;
+            this.winner = null;
         }
 
         getPiece(row, col) {
@@ -223,7 +225,47 @@
             return moves.some(move => move.type === 'jump');
         }
 
+        countPieces() {
+            let red = 0;
+            let black = 0;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = this.getPiece(r, c);
+                    if (piece) {
+                        if (piece.toLowerCase() === 'r') red++;
+                        else if (piece.toLowerCase() === 'b') black++;
+                    }
+                }
+            }
+            return { red, black };
+        }
+
+        checkWinCondition() {
+            if (this.winner) return; // Game already won
+
+            const { red, black } = this.countPieces();
+
+            if (red === 0) {
+                this.winner = 'black';
+                console.log("Game over! Black wins - no red pieces left.");
+                return;
+            }
+            if (black === 0) {
+                this.winner = 'red';
+                console.log("Game over! Red wins - no black pieces left.");
+                return;
+            }
+
+            const validMoves = this.getAllValidMoves();
+            if (validMoves.length === 0) {
+                this.winner = this.currentPlayer === 'red' ? 'black' : 'red';
+                console.log(`Game over! ${this.winner.charAt(0).toUpperCase() + this.winner.slice(1)} wins - ${this.currentPlayer} has no valid moves.`);
+            }
+        }
+
         makeMove(move) {
+            if (this.winner) return false; // Don't allow moves if game is over
+
             const { from, to } = move;
             const [fromRow, fromCol] = from;
             const [toRow, toCol] = to;
@@ -268,6 +310,7 @@
                 this.currentPlayer = this.currentPlayer === 'red' ? 'black' : 'red';
                 this.mustJump = false;
                 this.selectedPiece = null;
+                this.checkWinCondition(); // Check for win after switching player
             }
 
             if (this.onMoveCallback) {
@@ -286,7 +329,8 @@
                 board: this.board.map(row => [...row]),
                 currentPlayer: this.currentPlayer,
                 mustJump: this.mustJump,
-                selectedPiece: this.selectedPiece
+                selectedPiece: this.selectedPiece,
+                winner: this.winner
             };
         }
 
@@ -295,6 +339,7 @@
             this.currentPlayer = state.currentPlayer;
             this.mustJump = state.mustJump || false;
             this.selectedPiece = state.selectedPiece || null;
+            this.winner = state.winner || null;
         }
     }
 
@@ -625,6 +670,8 @@
 
     function handleSquareClick(squareId) {
         const game = window.checkersGame;
+        if (game.winner) return; // Game is over, do nothing
+
         const [row, col] = squareToRowCol(squareId);
         const stateKey = `checkers_game_${config.instance}`;
 
