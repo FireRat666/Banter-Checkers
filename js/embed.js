@@ -529,17 +529,18 @@
             const pos = getSquarePos(squareId);
             pos.y = isKing ? 0.2 : 0.15;
             transform.localPosition = pos;
-            transform.localScale = new BS.Vector3(1, 1, 1);
 
-            // Create cylinder for piece
+            // Create rounded piece (flattened sphere)
             const radius = 0.18;
             const height = isKing ? 0.15 : 0.1;
+            const yScale = height / (radius * 2);
+            transform.localScale = new BS.Vector3(1, yScale, 1);
+
             const geoArgs = [
-                BS.GeometryType.CylinderGeometry, null, 1, 1, 1, 1, 1, 1,
+                BS.GeometryType.SphereGeometry, null, 1, 1, 1, 24, 16, 1,
                 radius, 24, 0, 6.283185, 0, 6.283185, 8, false,
                 radius, radius, 0, 1, 24, 8, 0.4, 16, 6.283185, 2, 3, 5, 5, 0, ""
             ];
-            geoArgs[3] = height;
             await piece.AddComponent(new BS.BanterGeometry(...geoArgs));
 
             const color = isRed ? hexToVector4(COLORS.redPiece) : hexToVector4(COLORS.blackPiece);
@@ -551,14 +552,15 @@
                 await crown.SetParent(piece, false);
 
                 let crownTrans = await crown.AddComponent(new BS.Transform());
-                crownTrans.localPosition = new BS.Vector3(0, 0.08, 0);
-                crownTrans.localScale = new BS.Vector3(1, 1, 1);
+                crownTrans.localPosition = new BS.Vector3(0, 0.08 / yScale, 0);
+                crownTrans.localScale = new BS.Vector3(1, 1 / yScale, 1);
 
-                const crownArgs = [...geoArgs];
+                const crownArgs = [
+                    BS.GeometryType.CylinderGeometry, null, 1, 1, 1, 1, 1, 1,
+                    radius * 1.2, 24, 0, 6.283185, 0, 6.283185, 8, false,
+                    radius * 1.2, radius * 1.2, 0, 1, 24, 8, 0.4, 16, 6.283185, 2, 3, 5, 5, 0, ""
+                ];
                 crownArgs[3] = 0.03;
-                crownArgs[8] = radius * 1.2;
-                crownArgs[16] = radius * 1.2;
-                crownArgs[17] = radius * 1.2;
                 await crown.AddComponent(new BS.BanterGeometry(...crownArgs));
 
                 const crownColor = hexToVector4(COLORS.kingCrown);
@@ -566,7 +568,7 @@
             }
 
             // Smaller collider positioned at top of piece to avoid blocking tile clicks
-            await piece.AddComponent(new BS.BoxCollider(true, new BS.Vector3(0, 0.15, 0), new BS.Vector3(0.2, 0.15, 0.2)));
+            await piece.AddComponent(new BS.BoxCollider(true, new BS.Vector3(0, 0.15 / yScale, 0), new BS.Vector3(0.2, 0.15 / yScale, 0.2)));
             await piece.SetLayer(5);
 
             piece.On('click', () => {
