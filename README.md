@@ -41,7 +41,7 @@ To embed in BanterVR, add the embed script to your space's HTML. The game will a
 
 Add this to your Banter space HTML:
 ```html
-<script src="https://your-username.github.io/BanterCheckers/js/embed.js"></script>
+<script src="https://banter-checkers.firer.at/js/embed.js"></script>
 ```
 
 ### Configuration
@@ -49,7 +49,7 @@ Add this to your Banter space HTML:
 Customize the board's position, rotation, and scale using URL parameters:
 
 ```html
-<script src="https://your-username.github.io/BanterCheckers/js/embed.js?boardPosition=0+1.1+-2&boardScale=1.5&boardRotation=0+45+0"></script>
+<script src="https://banter-checkers.firer.at/js/embed.js?boardPosition=0+1.1+-2&boardScale=1.5&boardRotation=0+45+0"></script>
 ```
 
 **Available Parameters:**
@@ -67,20 +67,20 @@ Customize the board's position, rotation, and scale using URL parameters:
 **Multiple boards in the same space:**
 ```html
 <!-- Board 1: Center -->
-<script src="https://your-username.github.io/BanterCheckers/js/embed.js?instance=board1&boardPosition=0+1+-2"></script>
+<script src="https://banter-checkers.firer.at/js/embed.js?instance=board1&boardPosition=0+1+-2"></script>
 
 <!-- Board 2: To the right -->
-<script src="https://your-username.github.io/BanterCheckers/js/embed.js?instance=board2&boardPosition=3+1+-2"></script>
+<script src="https://banter-checkers.firer.at/js/embed.js?instance=board2&boardPosition=3+1+-2"></script>
 ```
 
 **Rotated board:**
 ```html
-<script src="https://your-username.github.io/BanterCheckers/js/embed.js?boardRotation=0+45+0"></script>
+<script src="https://banter-checkers.firer.at/js/embed.js?boardRotation=0+45+0"></script>
 ```
 
 **Larger board without UI:**
 ```html
-<script src="https://your-username.github.io/BanterCheckers/js/embed.js?boardScale=2&hideUI=true"></script>
+<script src="https://banter-checkers.firer.at/js/embed.js?boardScale=2&hideUI=true"></script>
 ```
 
 ## License
