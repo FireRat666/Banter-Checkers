@@ -58,7 +58,7 @@
 
     const PIECE_MODELS = {
         'r': 'DiscRed.glb',
-        'b': 'DiscWood.glb'
+        'b': 'DiscDarkGrey.glb'
     };
 
     function getModelUrl(modelName) {
