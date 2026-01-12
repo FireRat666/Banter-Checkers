@@ -600,7 +600,7 @@
                     let modelTrans = await model.AddComponent(new BS.Transform());
                     modelTrans.localPosition = new BS.Vector3(0, i * 0.05, 0); // Stack them
                     modelTrans.localScale = new BS.Vector3(0.18, 0.18, 0.18);
-                    modelTrans.localEulerAngles = new BS.Vector3(90, 0, 0);
+                    modelTrans.localEulerAngles = new BS.Vector3(0, 0, 0);
 
                     await model.AddComponent(new BS.BanterGLTF(url, false, false, false, false, false, false));
                     await model.AddComponent(new BS.BanterMaterial(shader, "", color, BS.MaterialSide.Front, false));
