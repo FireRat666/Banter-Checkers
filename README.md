@@ -61,6 +61,10 @@ Customize the board's position, rotation, and scale using URL parameters:
 - `resetScale`: Reset button scale as single value or `x y z` (Default: `1`)
 - `hideUI`: Set to `true` to hide the reset button (Default: `false`)
 - `instance`: Custom instance/room identifier (Default: current URL)
+- `HideBoard`: If `true`, hides the game board. (Default: `false`)
+- `useCustomModels`: If `true`, uses custom GLB models for the pieces instead of the default spheres. (Default: `false`)
+- `lighting`: Set to `lit` to use physically-based lit materials that respond to scene lights. (Default: `unlit`)
+- `addLights`: When `lighting=lit`, this controls whether a default directional light is added. Set to `false` if you have your own lights. (Default: `true`)
 
 ### Examples
 
