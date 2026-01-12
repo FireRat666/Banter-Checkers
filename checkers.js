@@ -489,7 +489,7 @@
                 const tile = await createBanterObject(
                     `Tile_${squareId}`,
                     state.boardRoot,
-                    new BS.Vector3(xPos, 0, zPos),
+                    new BS.Vector3(xPos, -0.05, zPos),
                     isDark ? COLORS.darkSquare : COLORS.lightSquare,
                     BS.GeometryType.BoxGeometry,
                     { width: 0.5, height: 0.1, depth: 0.5 },
@@ -556,7 +556,7 @@
         const size = state.tileSize;
         const xPos = (col * size) - state.offset;
         const zPos = (row * size) - state.offset;
-        return new BS.Vector3(xPos, 0.15, zPos);
+        return new BS.Vector3(xPos, 0, zPos);
     }
 
     async function createPiece(pieceChar, squareId, parent) {
@@ -572,7 +572,12 @@
             if (!transform) transform = await piece.AddComponent(new BS.Transform());
 
             const pos = getSquarePos(squareId);
-            pos.y = isKing ? 0.2 : 0.15;
+            // Tiles are at Y=-0.05, height 0.1, so surface is at Y=0
+            if (config.useCustomModels) {
+                pos.y = 0; // Pivot at 0
+            } else {
+                pos.y = isKing ? 0.075 : 0.05; // Spheres are centered, so half-height offset
+            }
             transform.localPosition = pos;
 
             const radius = 0.18;
