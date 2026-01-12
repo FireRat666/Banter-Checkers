@@ -575,16 +575,12 @@
             pos.y = isKing ? 0.2 : 0.15;
             transform.localPosition = pos;
 
-            // Create rounded piece (flattened sphere)
             const radius = 0.18;
-            const height = isKing ? 0.15 : 0.1;
-            const yScale = height / (radius * 2);
-            transform.localScale = new BS.Vector3(1, yScale, 1);
-
             const color = isRed ? hexToVector4(COLORS.redPiece) : hexToVector4(COLORS.blackPiece);
             const shader = config.lighting === 'lit' ? "Standard" : "Unlit/Diffuse";
 
             if (config.useCustomModels) {
+                transform.localScale = new BS.Vector3(1, 1, 1);
                 const modelName = PIECE_MODELS[type];
                 const url = getModelUrl(modelName);
 
@@ -605,7 +601,17 @@
                     await model.AddComponent(new BS.BanterGLTF(url, false, false, false, false, false, false));
                     await model.AddComponent(new BS.BanterMaterial(shader, "", color, BS.MaterialSide.Front, false));
                 }
+                
+                // Add a simple collider for the GLB stack
+                const colHeight = isKing ? 0.1 : 0.05;
+                await piece.AddComponent(new BS.BoxCollider(true, new BS.Vector3(0, colHeight / 2, 0), new BS.Vector3(radius * 2, colHeight, radius * 2)));
+
             } else {
+                // Create rounded piece (flattened sphere)
+                const height = isKing ? 0.15 : 0.1;
+                const yScale = height / (radius * 2);
+                transform.localScale = new BS.Vector3(1, yScale, 1);
+
                 const geoArgs = [
                     BS.GeometryType.SphereGeometry, null, 1, 1, 1, 24, 16, 1,
                     radius, 24, 0, 6.283185, 0, 6.283185, 8, false,
@@ -634,10 +640,10 @@
                     const crownColor = hexToVector4(COLORS.kingCrown);
                     await crown.AddComponent(new BS.BanterMaterial(shader, "", crownColor, BS.MaterialSide.Front, false));
                 }
-            }
 
-            // Smaller collider positioned at top of piece to avoid blocking tile clicks
-            await piece.AddComponent(new BS.BoxCollider(true, new BS.Vector3(0, 0.15 / yScale, 0), new BS.Vector3(0.2, 0.15 / yScale, 0.2)));
+                // Smaller collider positioned at top of piece to avoid blocking tile clicks
+                await piece.AddComponent(new BS.BoxCollider(true, new BS.Vector3(0, 0.15 / yScale, 0), new BS.Vector3(0.2, 0.15 / yScale, 0.2)));
+            }
             await piece.SetLayer(5);
 
             piece.On('click', () => {
