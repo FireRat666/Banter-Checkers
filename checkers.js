@@ -13,7 +13,11 @@
         resetRotation: new BS.Vector3(0, 0, 0),
         resetScale: new BS.Vector3(1, 1, 1),
         instance: window.location.href.split('?')[0],
-        hideUI: false
+        hideUI: false,
+        hideBoard: false,
+        useCustomModels: false,
+        lighting: 'unlit',
+        addLights: true
     };
 
     // Helper to parse Vector3 from string
@@ -37,7 +41,11 @@
         const params = new URLSearchParams(url.search);
 
         if (params.has('hideUI')) config.hideUI = params.get('hideUI') === 'true';
+        if (params.has('hideBoard')) config.hideBoard = params.get('hideBoard') === 'true';
         if (params.has('instance')) config.instance = params.get('instance');
+        if (params.has('useCustomModels')) config.useCustomModels = params.get('useCustomModels') === 'true';
+        if (params.has('lighting')) config.lighting = params.get('lighting');
+        if (params.has('addLights')) config.addLights = params.get('addLights') !== 'false';
 
         config.boardScale = parseVector3(params.get('boardScale'), config.boardScale);
         config.boardPosition = parseVector3(params.get('boardPosition'), config.boardPosition);
@@ -46,6 +54,20 @@
         config.resetPosition = parseVector3(params.get('resetPosition'), config.resetPosition);
         config.resetRotation = parseVector3(params.get('resetRotation'), config.resetRotation);
         config.resetScale = parseVector3(params.get('resetScale'), config.resetScale);
+    }
+
+    const PIECE_MODELS = {
+        'r': 'DiscRed.glb',
+        'b': 'DiscWood.glb'
+    };
+
+    function getModelUrl(modelName) {
+        try {
+            if (currentScript) {
+                return new URL(`Models/${modelName}`, currentScript.src).href;
+            }
+        } catch (e) { console.error("Error resolving model URL:", e); }
+        return `Models/${modelName}`;
     }
 
     // --- Dependency Loading ---
@@ -378,7 +400,7 @@
     async function initializeBoard() {
         // Ensure we have a valid user before proceeding with state logic if possible,
         // though we mainly need it for getSpaceStateValue later.
-        
+
         state.boardRoot = await new BS.GameObject("CheckersBoardRoot");
 
         let rootTrans = state.boardRoot.GetComponent(BS.ComponentType.Transform);
@@ -387,6 +409,16 @@
         rootTrans.position = config.boardPosition;
         rootTrans.localEulerAngles = config.boardRotation;
         rootTrans.localScale = config.boardScale;
+
+        // Add lights if lit
+        if (config.lighting === 'lit' && config.addLights) {
+            const lightGO = await new BS.GameObject("Checkers_DirectionalLight");
+            await lightGO.SetParent(state.boardRoot, false);
+            let lightTrans = await lightGO.AddComponent(new BS.Transform());
+            lightTrans.localPosition = new BS.Vector3(0, 5, -5);
+            lightTrans.localEulerAngles = new BS.Vector3(45, 0, 0);
+            await lightGO.AddComponent(new BS.Light(1, new BS.Vector4(1, 1, 1, 1), 1, 0.1));
+        }
 
         console.log("Checkers Board Initialized with Config:", config);
 
@@ -421,11 +453,11 @@
         btn.On('click', () => {
             console.log("Resetting game...");
             window.checkersGame.reset();
-            
+
             const boardState = window.checkersGame.getBoardState();
             const stateKey = `checkers_game_${config.instance}`;
             BS.BanterScene.GetInstance().SetPublicSpaceProps({ [stateKey]: JSON.stringify(boardState) });
-            
+
             syncBoard();
             clearSelection();
         });
@@ -460,7 +492,10 @@
                     new BS.Vector3(xPos, 0, zPos),
                     isDark ? COLORS.darkSquare : COLORS.lightSquare,
                     BS.GeometryType.BoxGeometry,
-                    { width: 0.5, height: 0.1, depth: 0.5 }
+                    { width: 0.5, height: 0.1, depth: 0.5 },
+                    false, // hasCollider
+                    1.0, // opacity
+                    true // isTile
                 );
 
                 tile.On('click', () => handleSquareClick(squareId));
@@ -471,7 +506,7 @@
         await syncBoard();
     }
 
-    async function createBanterObject(name, parent, posLocal, colorHex, geometryType, dims) {
+    async function createBanterObject(name, parent, posLocal, colorHex, geometryType, dims, hasCollider = false, opacity = 1.0, isTile = false) {
         const obj = await new BS.GameObject(name).Async();
         await obj.SetParent(parent, false);
 
@@ -483,7 +518,16 @@
         await obj.AddComponent(new BS.BanterGeometry(...geoArgs));
 
         const color = hexToVector4(colorHex);
-        await obj.AddComponent(new BS.BanterMaterial("Unlit/Diffuse", "", color, BS.MaterialSide.Front, false));
+        color.w = opacity;
+
+        let shader = "Unlit/Diffuse";
+        if (config.lighting === 'lit') {
+            shader = "Standard";
+        } else if (opacity < 1.0 || (config.hideBoard && isTile)) {
+            shader = "Unlit/DiffuseTransparent";
+        }
+
+        await obj.AddComponent(new BS.BanterMaterial(shader, "", color, BS.MaterialSide.Front, false));
 
         let colSize;
         if (geometryType === BS.GeometryType.BoxGeometry) {
@@ -519,6 +563,7 @@
         try {
             const isRed = pieceChar.toLowerCase() === 'r';
             const isKing = pieceChar === pieceChar.toUpperCase();
+            const type = pieceChar.toLowerCase();
 
             const piece = await new BS.GameObject(`Piece_${pieceChar}_${Math.random().toString(36).substr(2, 5)}`).Async();
             await piece.SetParent(parent, false);
@@ -536,35 +581,59 @@
             const yScale = height / (radius * 2);
             transform.localScale = new BS.Vector3(1, yScale, 1);
 
-            const geoArgs = [
-                BS.GeometryType.SphereGeometry, null, 1, 1, 1, 24, 16, 1,
-                radius, 24, 0, 6.283185, 0, 6.283185, 8, false,
-                radius, radius, 0, 1, 24, 8, 0.4, 16, 6.283185, 2, 3, 5, 5, 0, ""
-            ];
-            await piece.AddComponent(new BS.BanterGeometry(...geoArgs));
-
             const color = isRed ? hexToVector4(COLORS.redPiece) : hexToVector4(COLORS.blackPiece);
-            await piece.AddComponent(new BS.BanterMaterial("Unlit/Diffuse", "", color, BS.MaterialSide.Front, false));
+            const shader = config.lighting === 'lit' ? "Standard" : "Unlit/Diffuse";
 
-            // Add king crown if needed
-            if (isKing) {
-                const crown = await new BS.GameObject(`Crown_${Math.random().toString(36).substr(2, 5)}`).Async();
-                await crown.SetParent(piece, false);
+            if (config.useCustomModels) {
+                const modelName = PIECE_MODELS[type];
+                const url = getModelUrl(modelName);
 
-                let crownTrans = await crown.AddComponent(new BS.Transform());
-                crownTrans.localPosition = new BS.Vector3(0, 0.08 / yScale, 0);
-                crownTrans.localScale = new BS.Vector3(1, 1 / yScale, 1);
+                // Create a container for the model to handle stacking
+                const modelContainer = await new BS.GameObject(`ModelContainer_${type}`).Async();
+                await modelContainer.SetParent(piece, false);
+                await modelContainer.AddComponent(new BS.Transform());
 
-                const crownArgs = [
-                    BS.GeometryType.CylinderGeometry, null, 1, 1, 1, 1, 1, 1,
-                    radius * 1.2, 24, 0, 6.283185, 0, 6.283185, 8, false,
-                    radius * 1.2, radius * 1.2, 0, 1, 24, 8, 0.4, 16, 6.283185, 2, 3, 5, 5, 0, ""
+                const count = isKing ? 2 : 1;
+                for (let i = 0; i < count; i++) {
+                    const model = await new BS.GameObject(`Model_${i}`).Async();
+                    await model.SetParent(modelContainer, false);
+                    let modelTrans = await model.AddComponent(new BS.Transform());
+                    modelTrans.localPosition = new BS.Vector3(0, i * 0.05, 0); // Stack them
+                    modelTrans.localScale = new BS.Vector3(0.18, 0.18, 0.18);
+                    modelTrans.localEulerAngles = new BS.Vector3(90, 0, 0);
+
+                    await model.AddComponent(new BS.BanterGLTF(url, false, false, false, false, false, false));
+                    await model.AddComponent(new BS.BanterMaterial(shader, "", color, BS.MaterialSide.Front, false));
+                }
+            } else {
+                const geoArgs = [
+                    BS.GeometryType.SphereGeometry, null, 1, 1, 1, 24, 16, 1,
+                    radius, 24, 0, 6.283185, 0, 6.283185, 8, false,
+                    radius, radius, 0, 1, 24, 8, 0.4, 16, 6.283185, 2, 3, 5, 5, 0, ""
                 ];
-                crownArgs[3] = 0.03;
-                await crown.AddComponent(new BS.BanterGeometry(...crownArgs));
+                await piece.AddComponent(new BS.BanterGeometry(...geoArgs));
+                await piece.AddComponent(new BS.BanterMaterial(shader, "", color, BS.MaterialSide.Front, false));
 
-                const crownColor = hexToVector4(COLORS.kingCrown);
-                await crown.AddComponent(new BS.BanterMaterial("Unlit/Diffuse", "", crownColor, BS.MaterialSide.Front, false));
+                // Add king crown if needed (only for sphere mode)
+                if (isKing) {
+                    const crown = await new BS.GameObject(`Crown_${Math.random().toString(36).substr(2, 5)}`).Async();
+                    await crown.SetParent(piece, false);
+
+                    let crownTrans = await crown.AddComponent(new BS.Transform());
+                    crownTrans.localPosition = new BS.Vector3(0, 0.08 / yScale, 0);
+                    crownTrans.localScale = new BS.Vector3(1, 1 / yScale, 1);
+
+                    const crownArgs = [
+                        BS.GeometryType.CylinderGeometry, null, 1, 1, 1, 1, 1, 1,
+                        radius * 1.2, 24, 0, 6.283185, 0, 6.283185, 8, false,
+                        radius * 1.2, radius * 1.2, 0, 1, 24, 8, 0.4, 16, 6.283185, 2, 3, 5, 5, 0, ""
+                    ];
+                    crownArgs[3] = 0.03;
+                    await crown.AddComponent(new BS.BanterGeometry(...crownArgs));
+
+                    const crownColor = hexToVector4(COLORS.kingCrown);
+                    await crown.AddComponent(new BS.BanterMaterial(shader, "", crownColor, BS.MaterialSide.Front, false));
+                }
             }
 
             // Smaller collider positioned at top of piece to avoid blocking tile clicks
@@ -666,7 +735,15 @@
         if (!go) return;
         const mat = go.GetComponent(BS.ComponentType.BanterMaterial);
         if (mat) {
-            mat.color = hexToVector4(hexColor);
+            const newColor = hexToVector4(hexColor);
+            if (config.hideBoard && go.name.startsWith("Tile_")) {
+                if (hexColor === COLORS.selected || hexColor === COLORS.valid) {
+                    newColor.w = 0.5;
+                } else {
+                    newColor.w = 0;
+                }
+            }
+            mat.color = newColor;
         }
     }
 
@@ -780,7 +857,7 @@
             if (changes && changes.find(c => c.property === stateKey)) {
                 const spaceState = scene.spaceState;
                 const val = (spaceState.public && spaceState.public[stateKey]) || (spaceState.protected && spaceState.protected[stateKey]);
-                
+
                 if (val) {
                     try {
                         const gameState = JSON.parse(val);
