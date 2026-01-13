@@ -1,5 +1,5 @@
 (function() {
-    // This script is a redirect to the new checkers.js file.
+    // This script is a redirect to the new Checkers.js file.
     // It preserves the query parameters from the original script tag.
 
     const currentScript = document.currentScript;
@@ -12,7 +12,7 @@
     const searchParams = currentSrc.split('?')[1] || '';
 
     // The new script is one level up from the 'js' directory.
-    const newScriptUrl = new URL('../checkers.js', currentSrc).href;
+    const newScriptUrl = new URL('../Checkers.js', currentSrc).href;
     
     const finalUrl = newScriptUrl + (searchParams ? '?' + searchParams : '');
 
