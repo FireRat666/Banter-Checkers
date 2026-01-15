@@ -578,7 +578,7 @@
             if (config.useCustomModels) {
                 pos.y = 0; // Pivot at 0
             } else {
-                pos.y = isKing ? 0.075 : 0.05; // Spheres are centered, so half-height offset
+                pos.y = isKing ? 0.15 : 0.1; // Spheres are centered, so half-height offset
             }
             transform.localPosition = pos;
 
