@@ -445,7 +445,8 @@
         await btn.AddComponent(new BS.BanterGeometry(...geoArgs));
 
         const redColor = new BS.Vector4(0.8, 0.2, 0.2, 1);
-        await btn.AddComponent(new BS.BanterMaterial("Unlit/Diffuse", "", redColor, BS.MaterialSide.Front, false));
+        const shader = config.lighting === 'lit' ? "Standard" : "Unlit/Diffuse";
+        await btn.AddComponent(new BS.BanterMaterial(shader, "", redColor, BS.MaterialSide.Front, false));
 
         await btn.AddComponent(new BS.BoxCollider(true, new BS.Vector3(0, 0, 0), new BS.Vector3(w, h, d)));
         await btn.SetLayer(5);
