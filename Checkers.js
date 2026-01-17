@@ -477,32 +477,36 @@
 
     async function generateTiles() {
         const size = state.tileSize;
+        const promises = [];
 
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
-                const squareId = rowColToSquare(row, col);
-                const isDark = (row + col) % 2 === 1;
+                promises.push((async () => {
+                    const squareId = rowColToSquare(row, col);
+                    const isDark = (row + col) % 2 === 1;
 
-                const xPos = (col * size) - state.offset;
-                const zPos = (row * size) - state.offset;
+                    const xPos = (col * size) - state.offset;
+                    const zPos = (row * size) - state.offset;
 
-                const tile = await createBanterObject(
-                    `Tile_${squareId}`,
-                    state.boardRoot,
-                    new BS.Vector3(xPos, -0.05, zPos),
-                    isDark ? COLORS.darkSquare : COLORS.lightSquare,
-                    BS.GeometryType.BoxGeometry,
-                    { width: 0.5, height: 0.1, depth: 0.5 },
-                    false, // hasCollider
-                    1.0, // opacity
-                    true // isTile
-                );
+                    const tile = await createBanterObject(
+                        `Tile_${squareId}`,
+                        state.boardRoot,
+                        new BS.Vector3(xPos, -0.05, zPos),
+                        isDark ? COLORS.darkSquare : COLORS.lightSquare,
+                        BS.GeometryType.BoxGeometry,
+                        { width: 0.5, height: 0.1, depth: 0.5 },
+                        false, // hasCollider
+                        1.0, // opacity
+                        true // isTile
+                    );
 
-                tile.On('click', () => handleSquareClick(squareId));
-                state.tiles[squareId] = tile;
+                    tile.On('click', () => handleSquareClick(squareId));
+                    state.tiles[squareId] = tile;
+                })());
             }
         }
-
+        
+        await Promise.all(promises);
         await syncBoard();
     }
 
@@ -718,13 +722,17 @@
                 }
             }
 
-            // Create any missing pieces (new positions or promotions)
+            // Create any missing pieces (new positions or promotions) - Parallelized
+            const creationPromises = [];
             for (const [squareId, pieceChar] of Object.entries(targetPieces)) {
-                const piece = await createPiece(pieceChar, squareId, state.piecesRoot);
-                if (piece) {
-                    newPieces[squareId] = piece;
-                }
+                creationPromises.push((async () => {
+                    const piece = await createPiece(pieceChar, squareId, state.piecesRoot);
+                    if (piece) {
+                        newPieces[squareId] = piece;
+                    }
+                })());
             }
+            await Promise.all(creationPromises);
 
             state.pieces = newPieces;
             console.log("Board sync complete - optimized update.");
