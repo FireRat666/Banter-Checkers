@@ -1,4 +1,6 @@
 (function () {
+window.addEventListener("bs-loaded", async () => {
+    
     /**
      * BanterCheckers Unified Embed Script
      * Loads dependencies, initializes game logic, and renders the board in Banter.
@@ -913,29 +915,11 @@
         if (!window.checkersGame) {
             window.checkersGame = new CheckersGame();
         }
-        BS.BanterScene.GetInstance().On("unity-loaded", async () => {
-            console.log("CheckersGame Initializing checkers scene...");
-            await initializeBoard();
-        });
+        console.log("CheckersGame Initializing checkers scene...");
+        await initializeBoard();
     }
+    
+    init()
 
-
-
-    async function checkForBS() {
-        if (window.BS) {
-            // BS is loaded, so we can now execute the script
-            console.log(`Checkers Script BS is loaded, so we can now execute the script`);
-            init();
-        } else {
-            // BS not loaded yet, wait for it
-            console.log(`Checkers Script BS not loaded yet, wait for it`);
-            window.addEventListener("bs-loaded", async () => {
-                init();
-            })
-        }
-        console.log(`Checkers Script Checked for BS`);
-    }
-
-    checkForBS();
-
+})
 })();
