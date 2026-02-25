@@ -910,21 +910,32 @@
     // --- Main Initializer ---
     async function init() {
         await loadDependencies();
-
         if (!window.checkersGame) {
             window.checkersGame = new CheckersGame();
         }
-
-        if (window.BS) {
-            BS.BanterScene.GetInstance().On("unity-loaded", async () => {
-                console.log("Banter Unity Loaded. Initializing checkers scene...");
-                await initializeBoard();
-            });
-        } else {
-            console.error("Banter SDK (BS) not found.");
-        }
+        BS.BanterScene.GetInstance().On("unity-loaded", async () => {
+            console.log("CheckersGame Initializing checkers scene...");
+            await initializeBoard();
+        });
     }
 
-    init();
+
+
+    async function checkForBS() {
+        if (window.BS) {
+            // BS is loaded, so we can now execute the script
+            console.log(`Checkers Script BS is loaded, so we can now execute the script`);
+            init();
+        } else {
+            // BS not loaded yet, wait for it
+            console.log(`Checkers Script BS not loaded yet, wait for it`);
+            window.addEventListener("bs-loaded", async () => {
+                init();
+            })
+        }
+        console.log(`Checkers Script Checked for BS`);
+    }
+
+    checkForBS();
 
 })();
