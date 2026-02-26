@@ -1,5 +1,5 @@
-(function () {
 window.addEventListener("bs-loaded", async () => {
+(function () {
     
     /**
      * BanterCheckers Unified Embed Script
@@ -921,5 +921,5 @@ window.addEventListener("bs-loaded", async () => {
     
     init()
 
-})
 })();
+});
