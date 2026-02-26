@@ -1,4 +1,3 @@
-window.addEventListener("bs-loaded", async () => {
 (function () {
     
     /**
@@ -28,7 +27,7 @@ window.addEventListener("bs-loaded", async () => {
         const s = str.trim();
         if (s.includes(' ')) {
             const parts = s.split(' ').map(Number);
-            if (parts.length === 3) return new [parts[0], parts[1], parts[2]];
+            if (parts.length === 3) return [parts[0], parts[1], parts[2]];
         } else {
             const val = parseFloat(s);
             if (!isNaN(val)) return [val, val, val];
@@ -36,8 +35,10 @@ window.addEventListener("bs-loaded", async () => {
         return defaultVal;
     };
 
-    // Parse URL params from this script tag
+    // Parse URL params from this script tag immediately
     const currentScript = document.currentScript;
+    const scriptSrc = currentScript ? currentScript.src : null;
+
     if (currentScript) {
         const url = new URL(currentScript.src);
         const params = new URLSearchParams(url.search);
@@ -65,8 +66,8 @@ window.addEventListener("bs-loaded", async () => {
 
     function getModelUrl(modelName) {
         try {
-            if (currentScript) {
-                return new URL(`Models/${modelName}`, currentScript.src).href;
+            if (scriptSrc) {
+                return new URL(`Models/${modelName}`, scriptSrc).href;
             }
         } catch (e) { console.error("Error resolving model URL:", e); }
         return `Models/${modelName}`;
@@ -402,30 +403,6 @@ window.addEventListener("bs-loaded", async () => {
     async function initializeBoard() {
         // Ensure we have a valid user before proceeding with state logic if possible,
         // though we mainly need it for getSpaceStateValue later.
-
-        // Convert config array values to BS.Vector3 now that BS is available
-        config.boardPosition = new BS.Vector3(...config.boardPosition);
-        config.boardRotation = new BS.Vector3(...config.boardRotation);
-        config.boardScale = new BS.Vector3(...config.boardScale);
-        config.resetPosition = new BS.Vector3(...config.resetPosition);
-        config.resetRotation = new BS.Vector3(...config.resetRotation);
-        config.resetScale = new BS.Vector3(...config.resetScale);
-
-        // Re-parse URL params to ensure BS.Vector3 conversion for any overridden values
-        // This is necessary because parseVector3 now returns arrays, and we need BS.Vector3 objects
-        const currentScript = document.currentScript;
-        if (currentScript) {
-            const url = new URL(currentScript.src);
-            const params = new URLSearchParams(url.search);
-
-            if (params.has('boardScale')) config.boardScale = new BS.Vector3(...parseVector3(params.get('boardScale'), [1,1,1]));
-            if (params.has('boardPosition')) config.boardPosition = new BS.Vector3(...parseVector3(params.get('boardPosition'), [0,1.1,0]));
-            if (params.has('boardRotation')) config.boardRotation = new BS.Vector3(...parseVector3(params.get('boardRotation'), [0,0,0]));
-
-            if (params.has('resetScale')) config.resetScale = new BS.Vector3(...parseVector3(params.get('resetScale'), [1,1,1]));
-            if (params.has('resetPosition')) config.resetPosition = new BS.Vector3(...parseVector3(params.get('resetPosition'), [0,-0.4,0]));
-            if (params.has('resetRotation')) config.resetRotation = new BS.Vector3(...parseVector3(params.get('resetRotation'), [0,0,0]));
-        }
 
         state.boardRoot = await new BS.GameObject("CheckersBoardRoot");
 
@@ -934,16 +911,35 @@ window.addEventListener("bs-loaded", async () => {
     }
 
     // --- Main Initializer ---
-    async function init() {
+    let initialized = false;
+    const initGame = async () => {
+        if (initialized) return;
+        initialized = true;
+        console.log("Checkers: Initializing Game...");
+
         await loadDependencies();
         if (!window.checkersGame) {
             window.checkersGame = new CheckersGame();
         }
+
+        // Convert config arrays to BS.Vector3 now that BS is available
+        config.boardPosition = new BS.Vector3(...config.boardPosition);
+        config.boardRotation = new BS.Vector3(...config.boardRotation);
+        config.boardScale = new BS.Vector3(...config.boardScale);
+        config.resetPosition = new BS.Vector3(...config.resetPosition);
+        config.resetRotation = new BS.Vector3(...config.resetRotation);
+        config.resetScale = new BS.Vector3(...config.resetScale);
+
         console.log("CheckersGame Initializing checkers scene...");
         await initializeBoard();
+    };
+
+    // --- Check for BS availability ---
+    if (window.BS) {
+        initGame();
+    } else {
+        window.addEventListener("unity-loaded", initGame);
+        window.addEventListener("bs-loaded", initGame);
     }
-    
-    init()
 
 })();
-});
