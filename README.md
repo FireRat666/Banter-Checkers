@@ -46,45 +46,51 @@ Add this to your Banter space HTML:
 
 ### Configuration
 
-Customize the board's position, rotation, and scale using URL parameters:
+Customize the board's appearance and behavior using **HTML script attributes** (recommended) or legacy **URL query parameters** (for backwards compatibility).
 
+**HTML Script Attributes Example:**
 ```html
-<script src="https://banter-checkers.firer.at/checkers.js?boardPosition=0+1.1+-2&boardScale=1.5&boardRotation=0+45+0"></script>
+<script src="https://banter-checkers.firer.at/Checkers.js" boardPosition="0 1.1 -2" boardScale="1.5" boardRotation="0 45 0"></script>
 ```
 
-**Available Parameters:**
-- `boardPosition`: Board position in 3D space as `x y z` (Default: `0 1.1 -2`)
-- `boardRotation`: Board rotation as `x y z` degrees (Default: `0 0 0`)
-- `boardScale`: Board scale as single value or `x y z` (Default: `1`)
-- `resetPosition`: Reset button position relative to board as `x y z` (Default: `0 0 2.5`)
-- `resetRotation`: Reset button rotation as `x y z` degrees (Default: `0 0 0`)
-- `resetScale`: Reset button scale as single value or `x y z` (Default: `1`)
-- `hideUI`: Set to `true` to hide the reset button (Default: `false`)
+**Legacy URL Query Parameters Example:**
+```html
+<script src="https://banter-checkers.firer.at/Checkers.js?boardPosition=0+1.1+-2&boardScale=1.5&boardRotation=0+45+0"></script>
+```
+
+**Available Attributes / Parameters:**
+- `boardPosition` / `position` / `board-position`: Board position in 3D space as `x y z` (Default: `0 1.1 -2`)
+- `boardRotation` / `rotation` / `board-rotation`: Board rotation as `x y z` degrees (Default: `0 0 0`)
+- `boardScale` / `scale` / `board-scale`: Board scale as single value or `x y z` (Default: `1`)
+- `resetPosition` / `reset-position`: Reset button position relative to board as `x y z` (Default: `0 0 2.5`)
+- `resetRotation` / `reset-rotation`: Reset button rotation as `x y z` degrees (Default: `0 0 0`)
+- `resetScale` / `reset-scale`: Reset button scale as single value or `x y z` (Default: `1`)
+- `hideUI` / `hide-ui`: Set to `true` to hide the reset button (Default: `false`)
 - `instance`: Custom instance/room identifier (Default: current URL)
-- `HideBoard`: If `true`, hides the game board. (Default: `false`)
-- `useCustomModels`: If `true`, uses custom GLB models for the pieces instead of the default spheres. (Default: `false`)
+- `hideBoard` / `hide-board`: If `true`, hides the game board. (Default: `false`)
+- `useCustomModels` / `use-custom-models`: If `true`, uses custom GLB models for the pieces instead of the default spheres. (Default: `false`)
 - `lighting`: Set to `lit` to use physically-based lit materials that respond to scene lights. (Default: `unlit`)
-- `addLights`: When `lighting=lit`, this controls whether a default directional light is added. Set to `false` if you have your own lights. (Default: `true`)
+- `addLights` / `add-lights`: When `lighting=lit`, this controls whether a default directional light is added. Set to `false` if you have your own lights. (Default: `true`)
 
 ### Examples
 
-**Multiple boards in the same space:**
+**Multiple boards in the same space (using Attributes):**
 ```html
 <!-- Board 1: Center -->
-<script src="https://banter-checkers.firer.at/checkers.js?instance=board1&boardPosition=0+1+-2"></script>
+<script src="https://banter-checkers.firer.at/Checkers.js" instance="board1" boardPosition="0 1 -2"></script>
 
 <!-- Board 2: To the right -->
-<script src="https://banter-checkers.firer.at/checkers.js?instance=board2&boardPosition=3+1+-2"></script>
+<script src="https://banter-checkers.firer.at/Checkers.js" instance="board2" boardPosition="3 1 -2"></script>
 ```
 
-**Rotated board:**
+**Rotated board (using Attributes):**
 ```html
-<script src="https://banter-checkers.firer.at/checkers.js?boardRotation=0+45+0"></script>
+<script src="https://banter-checkers.firer.at/Checkers.js" boardRotation="0 45 0"></script>
 ```
 
-**Larger board without UI:**
+**Larger board without UI (using Attributes):**
 ```html
-<script src="https://banter-checkers.firer.at/checkers.js?boardScale=2&hideUI=true"></script>
+<script src="https://banter-checkers.firer.at/Checkers.js" boardScale="2" hideUI="true"></script>
 ```
 
 ## License
